@@ -34,8 +34,15 @@ $arr[2] = [6,8,5];
 
 $openList = new step();
 $openList->just_step = $arr;
+$openList->koordOfZeroBefore = [-1, -1];
+$abc = 0;
+makeOpenList($openList, $trueArr);
 
-makeOpenList($openList);
+echo "false\n";
+
+$fp = fopen('res.json', 'w');
+fwrite($fp, json_encode($openList));
+fclose($fp);
 
 //print_r($openList);
 

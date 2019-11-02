@@ -14,13 +14,13 @@ function countDistance(array $koord1, array $koord2): int
 	return ($x + $y);
 }
 
-function getCost(array $now, array $arr): int
+function getCost(array $now, array $trueArr): int
 {
 	$cost = 0;
 	$len = count($now);
 	for($i = 0; $i < $len; $i++){
 		for($j = 0; $j < count($now[$i]); $j++){
-			$cost += countDistance([$i,$j], returnKoordDaught($now[$i][$j], $arr));
+			$cost += countDistance([$i,$j], returnKoordDaught($now[$i][$j], $trueArr));
 		}
 	}
 

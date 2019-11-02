@@ -6,5 +6,7 @@ class Step
 
 	public $steps_before = [];
 
+	public $koordOfZeroBefore = [];
+
 	public $next = [];
 }

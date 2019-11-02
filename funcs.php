@@ -88,6 +88,7 @@ function makeTruePuzzleArray(int $size): array
 		
 		$a++; $i++;
 	}
+
 	return $arr;
 }
 
@@ -129,73 +130,150 @@ function makeStep(array $koordsTo, array $arr): array
 	return $arr;
 }
 
-function makeOpenList(&$steps)
+function getArraysOfStepsInBestOrder($table, $trueArr, $stepBefore)
 {
-	//echo rand(1, 100)."\n";
-	//$n = 4;
-	$posOfDaught = returnKoordDaught(0, $steps->just_step);
+	$size = count($table);
+	$posOfDaught = returnKoordDaught(0, $table);
+	$stepsInOrder = [];
+
+	if (($posOfDaught[1] - 1) >= 0 && $stepBefore !== [$posOfDaught[0], $posOfDaught[1] - 1]) {
+		$st = json_decode('{}');
+		$step = makeStep([$posOfDaught[0], $posOfDaught[1] - 1], $table);
+		$st->koordOfZero = [$posOfDaught[0], $posOfDaught[1] - 1];
+		$st->cost = getCost($step, $trueArr);
+		$stepsInOrder[] = $st;
+	}
+	if ($posOfDaught[1] + 1 < $size && $stepBefore !== [$posOfDaught[0], $posOfDaught[1] + 1]) {
+		$st = json_decode('{}');
+		$step = makeStep([$posOfDaught[0], $posOfDaught[1] + 1], $table);
+		$st->koordOfZero = [$posOfDaught[0], $posOfDaught[1] + 1];
+		$st->cost = getCost($step, $trueArr);
+		$stepsInOrder[] = $st;
+	}
+	if ($posOfDaught[0] + 1 < $size && $stepBefore !== [$posOfDaught[0], $posOfDaught[1] + 1]) {
+		$st = json_decode('{}');
+		$step = makeStep([$posOfDaught[0] + 1, $posOfDaught[1]], $table);
+		$st->koordOfZero = [$posOfDaught[0] + 1, $posOfDaught[1]];
+		$st->cost = getCost($step, $trueArr);
+		$stepsInOrder[] = $st;
+	}
+	if ($posOfDaught[0] - 1 >= 0 && $stepBefore !== [$posOfDaught[0] - 1, $posOfDaught[1]]) {
+		$st = json_decode('{}');
+		$step = makeStep([$posOfDaught[0] - 1, $posOfDaught[1]], $table);
+		$st->koordOfZero = [$posOfDaught[0] - 1, $posOfDaught[1]];
+		$st->cost = getCost($step, $trueArr);
+		$stepsInOrder[] = $st;
+	}
+
+	$len = count($stepsInOrder) - 1;
+	for ($i = 0; $i < $len; $i++) {
+		if ($stepsInOrder[$i]->cost > $stepsInOrder[$i + 1]->cost) {
+			$tmp = $stepsInOrder[$i];
+			$stepsInOrder[$i] = $stepsInOrder[$i + 1];
+			$stepsInOrder[$i + 1] = $tmp;
+			$i = -1;
+		}
+	}
+
+	return $stepsInOrder;
+}
+
+function makeOpenList(&$steps, $trueArr)
+{
+	//echo rand(1, 9) . "\n";
+	// $posOfDaught = returnKoordDaught(0, $steps->just_step);
 	$hashMapBefore = md5(serialize($steps->just_step));
-	$size = count($steps->just_step);
+	// $size = count($steps->just_step);
+
+	//print_r(getArraysOfStepsInBestOrder($steps->just_step, $trueArr, $steps->koordOfZeroBefore)); exit();
+
+	$stepsInOrder = getArraysOfStepsInBestOrder($steps->just_step, $trueArr, $steps->koordOfZeroBefore);
+	$len = count($stepsInOrder);
+
+	foreach($stepsInOrder as $key => $step) {
+			$obj = new Step();
+			$obj->just_step = makeStep($step->koordOfZero, $steps->just_step);
+			if (isEquelArrays($obj->just_step, $trueArr)) {
+				ksort($trueArr);
+				print_r($trueArr); exit();
+			}
+			$hashStep = md5(serialize($obj->just_step));
+			if (!in_array($hashStep, $steps->steps_before) && $hashStep !== $hashMapBefore) {
+				$obj->steps_before = $steps->steps_before;
+				$obj->koordOfZeroBefore = $step->koordOfZero;
+				array_push($obj->steps_before, $hashMapBefore);
+				array_push($steps->next, $obj);
+				unset($obj); unset($hashStep);
+				makeOpenList($steps->next[count($steps->next) - 1], $trueArr);
+			} else {
+				unset($obj); unset($hashStep); 
+			}
+	}
+
+
 
 	//for ($i = 0; $i < $n; $i++) {
 		
-		if ($posOfDaught[1] - 1 >= 0) {
-			$obj = new Step();
-			$obj->just_step = makeStep([$posOfDaught[0], $posOfDaught[1] - 1], $steps->just_step);
-			$hashStep = md5(serialize($obj->just_step));
-			if (!in_array($hashStep, $steps->steps_before) && $hashStep !== $hashMapBefore) {
-				$obj->steps_before = $steps->steps_before;
-				array_push($obj->steps_before, $hashMapBefore);
-				array_push($steps->next, $obj);
-				unset($obj); unset($hashStep);
-				makeOpenList($steps->next[count($steps->next) - 1]);
-			} else {
-				unset($obj); unset($hashStep); 
-			}
-		}
-		if ($posOfDaught[1] + 1 < $size) {
-			$obj = new Step();
-			$obj->just_step = makeStep([$posOfDaught[0], $posOfDaught[1] + 1], $steps->just_step);
-			$hashStep = md5(serialize($obj->just_step));
-			if (!in_array($hashStep, $steps->steps_before) && $hashStep !== $hashMapBefore) {
-				$obj->steps_before = $steps->steps_before;
-				array_push($obj->steps_before, $hashMapBefore);
-				array_push($steps->next, $obj);
-				unset($obj); unset($hashStep);
-				makeOpenList($steps->next[count($steps->next) - 1]);
-			} else {
-				unset($obj); unset($hashStep);
-			}
-		}
-		if ($posOfDaught[0] + 1 < $size) {
-			$obj = new Step();
-			$obj->just_step = makeStep([$posOfDaught[0] + 1, $posOfDaught[1]], $steps->just_step);
-			$hashStep = md5(serialize($obj->just_step));
-			if (!in_array($hashStep, $steps->steps_before) && $hashStep !== $hashMapBefore) {
-				$obj->steps_before = $steps->steps_before;
-				array_push($obj->steps_before, $hashMapBefore);
-				array_push($steps->next, $obj);
-				unset($obj); unset($hashStep);
-				makeOpenList($steps->next[count($steps->next) - 1]);
-			} else {
-				unset($obj); unset($hashStep); 
-			}
-		}
-		if ($posOfDaught[0] - 1 >= 0) {
-			$obj = new Step();
-			$obj->just_step = makeStep([$posOfDaught[0] - 1, $posOfDaught[1]], $steps->just_step);
-			$hashStep = md5(serialize($obj->just_step));
-			if (!in_array($hashStep, $steps->steps_before) && $hashStep !== $hashMapBefore) {
-				$obj->steps_before = $steps->steps_before;
-				array_push($obj->steps_before, $hashMapBefore);
-				array_push($steps->next, $obj);
-				unset($obj); unset($hashStep);
-				makeOpenList($steps->next[count($steps->next) - 1]);
-			} else {
-				unset($obj); unset($hashStep);
-			}
-		}
-		//unset($obj);
+		// if (($posOfDaught[1] - 1) >= 0 && $steps->koordOfZeroBefore[1] !== $posOfDaught[1] - 1) {
+		// 	$obj = new Step();
+		// 	$obj->just_step = makeStep([$posOfDaught[0], $posOfDaught[1] - 1], $steps->just_step);
+		// 	$hashStep = md5(serialize($obj->just_step));
+		// 	if (!in_array($hashStep, $steps->steps_before) && $hashStep !== $hashMapBefore) {
+		// 		$obj->steps_before = $steps->steps_before;
+		// 		$obj->koordOfZeroBefore = $posOfDaught;
+		// 		array_push($obj->steps_before, $hashMapBefore);
+		// 		array_push($steps->next, $obj);
+		// 		unset($obj); unset($hashStep);
+		// 		makeOpenList($steps->next[count($steps->next) - 1]);
+		// 	} else {
+		// 		unset($obj); unset($hashStep); 
+		// 	}
+		// }
+		// if ($posOfDaught[1] + 1 < $size && $steps->koordOfZeroBefore[1] !== $posOfDaught[1] + 1) {
+		// 	$obj = new Step();
+		// 	$obj->just_step = makeStep([$posOfDaught[0], $posOfDaught[1] + 1], $steps->just_step);
+		// 	$hashStep = md5(serialize($obj->just_step));
+		// 	if (!in_array($hashStep, $steps->steps_before) && $hashStep !== $hashMapBefore) {
+		// 		$obj->steps_before = $steps->steps_before;
+		// 		$obj->koordOfZeroBefore = $posOfDaught;
+		// 		array_push($obj->steps_before, $hashMapBefore);
+		// 		array_push($steps->next, $obj);
+		// 		unset($obj); unset($hashStep);
+		// 		makeOpenList($steps->next[count($steps->next) - 1]);
+		// 	} else {
+		// 		unset($obj); unset($hashStep);
+		// 	}
+		// }
+		// if ($posOfDaught[0] + 1 < $size && $steps->koordOfZeroBefore[0] !== $posOfDaught[0] + 1) {
+		// 	$obj = new Step();
+		// 	$obj->just_step = makeStep([$posOfDaught[0] + 1, $posOfDaught[1]], $steps->just_step);
+		// 	$hashStep = md5(serialize($obj->just_step));
+		// 	if (!in_array($hashStep, $steps->steps_before) && $hashStep !== $hashMapBefore) {
+		// 		$obj->steps_before = $steps->steps_before;
+		// 		$obj->koordOfZeroBefore = $posOfDaught;
+		// 		array_push($obj->steps_before, $hashMapBefore);
+		// 		array_push($steps->next, $obj);
+		// 		unset($obj); unset($hashStep);
+		// 		makeOpenList($steps->next[count($steps->next) - 1]);
+		// 	} else {
+		// 		unset($obj); unset($hashStep); 
+		// 	}
+		// }
+		// if ($posOfDaught[0] - 1 >= 0 && $steps->koordOfZeroBefore[0] !== $posOfDaught[0] - 1) {
+		// 	$obj = new Step();
+		// 	$obj->just_step = makeStep([$posOfDaught[0] - 1, $posOfDaught[1]], $steps->just_step);
+		// 	$hashStep = md5(serialize($obj->just_step));
+		// 	if (!in_array($hashStep, $steps->steps_before) && $hashStep !== $hashMapBefore) {
+		// 		$obj->steps_before = $steps->steps_before;
+		// 		$obj->koordOfZeroBefore = $posOfDaught;
+		// 		array_push($obj->steps_before, $hashMapBefore);
+		// 		array_push($steps->next, $obj);
+		// 		unset($obj); unset($hashStep);
+		// 		makeOpenList($steps->next[count($steps->next) - 1]);
+		// 	} else {
+		// 		unset($obj); unset($hashStep);
+		// 	}
+		// }
 	//}
 }
 
