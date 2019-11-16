@@ -11,7 +11,7 @@ function reedFile(string $path)
 		return false;
 	}
 
-	$strings = explode("\n", $content);
+	$strings = array_values(array_filter(explode("\n", $content)));
 
 	if (!is_numeric($strings[0])) {
 		return false;
@@ -22,8 +22,9 @@ function reedFile(string $path)
 
 	for ($i = 1, $len = count($strings); $i < $len; $i++) {
 		$map[$i - 1] = [];
-		$cifers = explode(" ", $strings[$i]);
+		$cifers = array_values(array_filter(explode(" ", $strings[$i]), function($value) { return !is_null($value) && $value !== ''; }));
 		if (count($cifers) !== $size) {
+				print_r($cifers);
 			return false;
 		}
 		foreach($cifers as $key => $cifer) {

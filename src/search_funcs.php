@@ -182,7 +182,6 @@ function idasearch(&$steps, $trueArr)
 {
 	$GLOBALS['closes'][] = $steps;
 	if ($steps->just_step === $trueArr) {
-		$GLOBALS['closes'][] = $steps;
 		finalFunc();
 		exit();
 	}
@@ -193,7 +192,7 @@ function idasearch(&$steps, $trueArr)
 	if (count($stepsInOrder) > 1) {
 		$s = new Step();
 		$s->just_step = makeStep($stepsInOrder[0]->koordOfZero, $steps->just_step);
-		$cost = $s->cost;
+		$cost = $stepsInOrder[0]->cost;
 
 		if ($s->just_step === $trueArr) {
 			$GLOBALS['closes'][] = $s;
@@ -214,7 +213,6 @@ function idasearch(&$steps, $trueArr)
 			} else if ($cost == $stepsInOrder[$i]->cost) {
 				$GLOBALS['opens'][] = $s;
 			}
-
 		}
 	}
 	
@@ -231,13 +229,11 @@ function idasearch(&$steps, $trueArr)
 			$obj->steps_before = $steps->steps_before;
 			$obj->koordOfZeroBefore = $step->koordOfZero;
 			array_push($obj->steps_before, $hashMapBefore);
-			array_push($steps->next, $obj);
-			unset($obj); unset($hashStep);
-			idasearch($steps->next[count($steps->next) - 1], $trueArr);
+			//array_push($steps->next, $obj);
+			//unset($obj); unset($hashStep);
+			idasearch($obj/*$steps->next[count($steps->next) - 1]*/, $trueArr);
 		} else {
 			unset($obj); unset($hashStep); 
 		}
 	}
 }
-
-

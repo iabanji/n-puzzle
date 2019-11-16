@@ -7,6 +7,7 @@ require_once("./src/search_funcs.php");
 require_once("./src/heuristic_funcs.php");
 require_once("./src/Step.class.php");
 require_once("./src/reader.php");
+require_once("./src/solvable.php");
 
 $distances = ['-t', '-e', '-m'];
 
@@ -29,8 +30,24 @@ if (!$content) {
 $opens = [];
 $closes = [];
 
-$size = $content[0];
+$size = intval($content[0]);
+$N = $size;
+if ($size < 3) {
+	echo "The size of puzzle must be 3x3 or more big\n";
+	exit();
+}
+
 $map = $content[1];
+//if ((isSolvable($map) == 0 && (($size % 2) == 0)) || (isSolvable($map) != 0 && (($size % 2) != 0))) {
+if ((isSolvable($map) != 0 && ($size % 2) != 0) || (isSolvable($map) == 0 && ($size % 2) == 0) && $size < 6) {
+	echo "This puzzle is not solvable\n";
+	exit();
+}
+
+// if (isSolvableEven($map) != 0 && ($size % 2) == 0) {
+// 	echo "This puzzle is not solvable\n";
+// 	exit();
+// }
 
 $trueArr = makeTruePuzzleArray($size);
 
@@ -39,7 +56,3 @@ $openList->just_step = $map;
 $openList->koordOfZeroBefore = [-1, -1];
 
 idaSearch($openList, $trueArr);
-
-// $fp = fopen('res.json', 'w');
-// fwrite($fp, json_encode($openList));
-// fclose($fp);
